@@ -11,6 +11,8 @@ import UIKit
 public protocol PhotoBrowserCellDelegate: NSObjectProtocol {
     /// 拖动时回调。scale:缩放比率
     func photoBrowserCell(_ cell: PhotoBrowserCell, didPanScale scale: CGFloat)
+  
+  func photoBrowserCellImageViewFrameChanged(_ cell: PhotoBrowserCell, imageView: UIImageView, duration: TimeInterval)
 
     /// 单击时回调
     func photoBrowserCell(_ cell: PhotoBrowserCell, didSingleTap image: UIImage?)
@@ -50,7 +52,7 @@ open class PhotoBrowserCell: UICollectionViewCell {
     open var photoLoader: PhotoLoader?
 
     /// 显示图像
-    open let imageView = UIImageView()
+    open var imageView = UIImageView()
 
     /// 保存原图url，用于点查看原图时使用
     open var rawUrl: URL?
@@ -142,7 +144,7 @@ open class PhotoBrowserCell: UICollectionViewCell {
         // 拖动手势
         let pan = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
         pan.delegate = self
-        scrollView.addGestureRecognizer(pan)
+        contentView.addGestureRecognizer(pan)
     }
 
     public required init?(coder aDecoder: NSCoder) {
@@ -259,22 +261,28 @@ extension PhotoBrowserCell {
         case .changed:
             let result = panResult(pan)
             imageView.frame = result.0
+            cellDelegate?.photoBrowserCellImageViewFrameChanged(self, imageView: imageView, duration: 0)
             // 通知代理，发生了缩放。代理可依scale值改变背景蒙板alpha值
             if let dlg = cellDelegate {
                 dlg.photoBrowserCell(self, didPanScale: result.1)
             }
         case .ended, .cancelled:
             imageView.frame = panResult(pan).0
+            cellDelegate?.photoBrowserCellImageViewFrameChanged(self, imageView: imageView, duration: 0)
             if pan.velocity(in: self).y > 0 {
                 // dismiss
                 onSingleTap()
             } else {
                 // 取消dismiss
                 endPan()
+              cellDelegate?.photoBrowserCellImageViewFrameChanged(self, imageView: imageView, duration: 0.25)
             }
         default:
             endPan()
+          cellDelegate?.photoBrowserCellImageViewFrameChanged(self, imageView: imageView, duration: 0.25)
         }
+      
+      
     }
 
     private func panResult(_ pan: UIPanGestureRecognizer) -> (CGRect, CGFloat) {

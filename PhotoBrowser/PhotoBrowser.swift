@@ -389,6 +389,18 @@ extension PhotoBrowser: UICollectionViewDataSource {
         return cell
     }
 
+    public func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+      cellPlugins.forEach {
+        $0.photoBrowserCellDidEndDisplay(cell as! PhotoBrowserCell, at: indexPath.item)
+      }
+    }
+  
+    public func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+      cellPlugins.forEach {
+        $0.photoBrowserCellWillDisplay(cell as! PhotoBrowserCell, at: indexPath.item)
+      }
+    }
+  
     /// 尝试取本地图片
     private func localImage(for index: Int) -> UIImage? {
         guard let images = localImages, index < images.count else {
@@ -516,6 +528,12 @@ extension PhotoBrowser: UIViewControllerTransitioningDelegate {
 //
 
 extension PhotoBrowser: PhotoBrowserCellDelegate {
+  public func photoBrowserCellImageViewFrameChanged(_ cell: PhotoBrowserCell, imageView: UIImageView, duration: TimeInterval) {
+    cellPlugins.forEach {
+      $0.photoBrowserImageViewFrameChanged(cell, imageView: imageView, duration: duration)
+    }
+  }
+  
 
     public func photoBrowserCell(_ cell: PhotoBrowserCell, didSingleTap image: UIImage?) {
         if let dlg = photoBrowserDelegate {
