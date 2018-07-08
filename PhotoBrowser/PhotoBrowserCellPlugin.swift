@@ -16,6 +16,8 @@ public protocol PhotoBrowserCellPlugin {
     /// 即将显示 Cell
     func photoBrowserCellWillDisplay(_ cell: PhotoBrowserCell, at index: Int)
   
+    func photoBrowserCellDisplay(_ cell: PhotoBrowserCell, at index: Int)
+  
     /// 每次取复用 cell 时会调用
     func photoBrowserCellDidReused(_ cell: PhotoBrowserCell, at index: Int)
 
@@ -23,6 +25,11 @@ public protocol PhotoBrowserCellPlugin {
     func photoBrowserCellDidLayout(_ cell: PhotoBrowserCell)
   
     func photoBrowserImageViewFrameChanged(_ cell: PhotoBrowserCell, imageView: UIImageView, duration: TimeInterval)
+  
+    func photoBrowserCellWillChangeImageViewFrame(_ cell: PhotoBrowserCell)
+    func photoBrowserCellEndChangeImageViewFrame(_ cell: PhotoBrowserCell)
+  
+  func photoBrowserCellWillSingleTap(_ cell: PhotoBrowserCell) -> Bool
 
     /// 设置图片资源时回调
     func photoBrowserCellSetImage(_ cell: PhotoBrowserCell, placeholder: UIImage?, highQualityUrl: URL?, rawUrl: URL?)
@@ -40,10 +47,16 @@ public protocol PhotoBrowserCellPlugin {
 extension PhotoBrowserCellPlugin {
   
     public func photoBrowserImageViewFrameChanged(_ cell: PhotoBrowserCell, imageView: UIImageView, duration: TimeInterval) {}
+    public func photoBrowserCellWillChangeImageViewFrame(_ cell: PhotoBrowserCell) {}
+    public func photoBrowserCellEndChangeImageViewFrame(_ cell: PhotoBrowserCell) {}
+  
+    public func photoBrowserCellWillSingleTap(_ cell: PhotoBrowserCell) -> Bool { return true }
   
     public func photoBrowserCellDidEndDisplay(_ cell: PhotoBrowserCell, at index: Int) {}
   
     public func photoBrowserCellWillDisplay(_ cell: PhotoBrowserCell, at index: Int) {}
+  
+    public func photoBrowserCellDisplay(_ cell: PhotoBrowserCell, at index: Int) {}
   
     /// 每次取复用 cell 时会调用
     public func photoBrowserCellDidReused(_ cell: PhotoBrowserCell, at index: Int) {}

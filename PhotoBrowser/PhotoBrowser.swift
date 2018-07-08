@@ -54,7 +54,7 @@ open class PhotoBrowser: UIViewController {
     //
 
     /// 当前显示的图片序号，从0开始
-    private var currentIndex = 0 {
+    open var currentIndex = 0 {
         didSet {
             if animationType == .scale {
                 scalePresentationController?.updateCurrentHiddenView(relatedView)
@@ -84,7 +84,7 @@ open class PhotoBrowser: UIViewController {
     }()
 
     /// 容器
-    private lazy var collectionView: UICollectionView = { [unowned self] in
+    open lazy var collectionView: UICollectionView = { [unowned self] in
         let collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: flowLayout)
         collectionView.backgroundColor = UIColor.clear
         collectionView.decelerationRate = UIScrollViewDecelerationRateFast
@@ -400,7 +400,7 @@ extension PhotoBrowser: UICollectionViewDataSource {
         $0.photoBrowserCellWillDisplay(cell as! PhotoBrowserCell, at: indexPath.item)
       }
     }
-  
+
     /// 尝试取本地图片
     private func localImage(for index: Int) -> UIImage? {
         guard let images = localImages, index < images.count else {
@@ -461,6 +461,8 @@ extension PhotoBrowser: UIViewControllerTransitioningDelegate {
         collectionView.reloadData()
         collectionView.scrollToItem(at: indexPath, at: .left, animated: false)
         collectionView.layoutIfNeeded()
+      
+      
         // 枚举动画类型
         switch animationType {
         case .scale, .scaleNoHiding:
@@ -528,6 +530,36 @@ extension PhotoBrowser: UIViewControllerTransitioningDelegate {
 //
 
 extension PhotoBrowser: PhotoBrowserCellDelegate {
+  public func photoBrowserCellWillChangeImageViewFrame(_ cell: PhotoBrowserCell) {
+    cellPlugins.forEach {
+      $0.photoBrowserCellWillChangeImageViewFrame(cell)
+    }
+  }
+  
+  public func photoBrowserCellEndChangeImageViewFrame(_ cell: PhotoBrowserCell) {
+    cellPlugins.forEach {
+      $0.photoBrowserCellEndChangeImageViewFrame(cell)
+    }
+  }
+  
+  public func photoBrowserCell(_ cell: PhotoBrowserCell, willSingleTap image: UIImage?) -> Bool {
+    var isCountinue = true
+    cellPlugins.forEach {
+      isCountinue = $0.photoBrowserCellWillSingleTap(cell)
+    }
+    guard isCountinue else { return  false }
+    return true
+  }
+  
+  public func photoBrowserCellStopScroll() {
+    collectionView.isScrollEnabled = false
+  }
+  
+  public func photoBrowserCellOpenScroll() {
+    collectionView.isScrollEnabled = true
+  }
+  
+  
   public func photoBrowserCellImageViewFrameChanged(_ cell: PhotoBrowserCell, imageView: UIImageView, duration: TimeInterval) {
     cellPlugins.forEach {
       $0.photoBrowserImageViewFrameChanged(cell, imageView: imageView, duration: duration)
@@ -536,6 +568,8 @@ extension PhotoBrowser: PhotoBrowserCellDelegate {
   
 
     public func photoBrowserCell(_ cell: PhotoBrowserCell, didSingleTap image: UIImage?) {
+      
+      
         if let dlg = photoBrowserDelegate {
             dlg.photoBrowser(self, willDismissWithIndex: currentIndex, image: image)
         }

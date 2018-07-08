@@ -12,8 +12,14 @@ public protocol PhotoBrowserCellDelegate: NSObjectProtocol {
     /// 拖动时回调。scale:缩放比率
     func photoBrowserCell(_ cell: PhotoBrowserCell, didPanScale scale: CGFloat)
   
+  func photoBrowserCellWillChangeImageViewFrame(_ cell: PhotoBrowserCell)
+  func photoBrowserCellEndChangeImageViewFrame(_ cell: PhotoBrowserCell)
   func photoBrowserCellImageViewFrameChanged(_ cell: PhotoBrowserCell, imageView: UIImageView, duration: TimeInterval)
 
+    func photoBrowserCellStopScroll()
+    func photoBrowserCellOpenScroll()
+  func photoBrowserCell(_ cell: PhotoBrowserCell, willSingleTap image: UIImage?) -> Bool
+  
     /// 单击时回调
     func photoBrowserCell(_ cell: PhotoBrowserCell, didSingleTap image: UIImage?)
 
@@ -44,7 +50,7 @@ open class PhotoBrowserCell: UICollectionViewCell {
 
     /// 可用来关联插件对象
     open var associatedObjects: [String: Any] = [:]
-
+  
     /// 代理
     open weak var cellDelegate: PhotoBrowserCellDelegate?
 
@@ -137,10 +143,10 @@ open class PhotoBrowserCell: UICollectionViewCell {
         contentView.addGestureRecognizer(doubleTap)
 
         // 单击手势
-        let singleTap = UITapGestureRecognizer(target: self, action: #selector(onSingleTap))
+        let singleTap = UITapGestureRecognizer(target: self, action: #selector(willSingleTap))
         contentView.addGestureRecognizer(singleTap)
         singleTap.require(toFail: doubleTap)
-
+      
         // 拖动手势
         let pan = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
         pan.delegate = self
@@ -226,7 +232,16 @@ open class PhotoBrowserCell: UICollectionViewCell {
 
 extension PhotoBrowserCell {
     /// 响应单击
-    @objc open func onSingleTap() {
+  
+  @objc open func willSingleTap() {
+    guard cellDelegate?.photoBrowserCell(self, willSingleTap: imageView.image) ?? true else {
+      return
+    }
+    
+    onSingleTap()
+  }
+  
+  @objc open func onSingleTap() {
         if let dlg = cellDelegate {
             dlg.photoBrowserCell(self, didSingleTap: imageView.image)
         }
@@ -256,6 +271,7 @@ extension PhotoBrowserCell {
         }
         switch pan.state {
         case .began:
+          cellDelegate?.photoBrowserCellWillChangeImageViewFrame(self)
             beganFrame = imageView.frame
             beganTouch = pan.location(in: scrollView)
         case .changed:
@@ -317,12 +333,15 @@ extension PhotoBrowserCell {
         let size = fitSize
         let needResetSize = imageView.bounds.size.width < size.width
             || imageView.bounds.size.height < size.height
-        UIView.animate(withDuration: 0.25) {
-            self.imageView.center = self.centerOfContentSize
-            if needResetSize {
-                self.imageView.bounds.size = size
-            }
+
+      UIView.animate(withDuration: 0.25, animations: {
+        self.imageView.center = self.centerOfContentSize
+        if needResetSize {
+          self.imageView.bounds.size = size
         }
+      }) { (finish) in
+        self.cellDelegate?.photoBrowserCellEndChangeImageViewFrame(self)
+      }
     }
 
     /// 响应长按
@@ -372,4 +391,18 @@ extension PhotoBrowserCell: UIGestureRecognizerDelegate {
         }
         return true
     }
+}
+
+
+extension PhotoBrowserCell {
+  open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+   let result = super.hitTest(point, with: event)
+    if result is UISlider || result is UIButton || result is UISwitch {
+      cellDelegate?.photoBrowserCellStopScroll()
+    }
+    else {
+      cellDelegate?.photoBrowserCellOpenScroll()
+    }
+    return result
+  }
 }
