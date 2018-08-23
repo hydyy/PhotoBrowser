@@ -150,7 +150,7 @@ open class PhotoBrowserCell: UICollectionViewCell {
         // 拖动手势
         let pan = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
         pan.delegate = self
-        contentView.addGestureRecognizer(pan)
+        scrollView.addGestureRecognizer(pan)
     }
 
     public required init?(coder aDecoder: NSCoder) {
