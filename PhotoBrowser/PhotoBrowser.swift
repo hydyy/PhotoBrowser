@@ -398,9 +398,10 @@ extension PhotoBrowser: UICollectionViewDataSource {
     public func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
       cellPlugins.forEach {
         $0.photoBrowserCellWillDisplay(cell as! PhotoBrowserCell, at: indexPath.item)
+        $0.photoBrowserCellDisplay(cell as! PhotoBrowserCell, at: indexPath.item)
       }
     }
-
+  
     /// 尝试取本地图片
     private func localImage(for index: Int) -> UIImage? {
         guard let images = localImages, index < images.count else {
