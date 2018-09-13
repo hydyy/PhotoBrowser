@@ -135,6 +135,7 @@ open class PhotoBrowserCell: UICollectionViewCell {
 
         // 长按手势
         let longPress = UILongPressGestureRecognizer(target: self, action: #selector(onLongPress(_:)))
+        longPress.minimumPressDuration = 0.3
         contentView.addGestureRecognizer(longPress)
 
         // 双击手势
