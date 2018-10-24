@@ -81,7 +81,7 @@ open class PhotoBrowserCell: UICollectionViewCell {
     /// 内嵌容器。本类不能继承UIScrollView。
     /// 因为实测UIScrollView遵循了UIGestureRecognizerDelegate协议，而本类也需要遵循此协议，
     /// 若继承UIScrollView则会覆盖UIScrollView的协议实现，故只内嵌而不继承。
-    open let scrollView = UIScrollView()
+    public let scrollView = UIScrollView()
 
     /// 计算contentSize应处于的中心位置
     private var centerOfContentSize: CGPoint {
