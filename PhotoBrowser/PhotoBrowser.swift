@@ -235,6 +235,12 @@ open class PhotoBrowser: UIViewController {
         coverStatusBar(false)
         dismiss(animated: animated, completion: nil)
     }
+  
+    /// 关闭页面
+    open func dismiss(animated: Bool, finish:(() -> Void)? = nil) {
+      coverStatusBar(false)
+      dismiss(animated: animated, completion: finish)
+    }
 
     /// 展示，传入完整参数
     /// - parameter animationType: 转场动画类型，默认为缩放动画`scale`
