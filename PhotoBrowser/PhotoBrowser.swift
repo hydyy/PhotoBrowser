@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import Photos
+import Async
 
 open class PhotoBrowser: UIViewController {
 
@@ -376,24 +378,57 @@ extension PhotoBrowser: UICollectionViewDataSource {
         return number
     }
 
-    public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(PhotoBrowserCell.self, for: indexPath)
-        cell.imageView.contentMode = imageScaleMode
-        cell.cellDelegate = self
-        cell.photoLoader = photoLoader
-        cell.imageMaximumZoomScale = imageMaximumZoomScale
-        cell.imageZoomScaleForDoubleTap = imageZoomScaleForDoubleTap
-        cellPlugins.forEach {
-            $0.photoBrowserCellDidReused(cell, at: indexPath.item)
-        }
-        if let local = localImage(for: indexPath.item) {
-            cell.setImage(local, highQualityUrl: nil, rawUrl: nil)
-        } else {
-            let (image, highQualityUrl, rawUrl) = imageFor(index: indexPath.item)
-            cell.setImage(image, highQualityUrl: highQualityUrl, rawUrl: rawUrl)
-        }
-        return cell
+  public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+    let cell = collectionView.dequeueReusableCell(PhotoBrowserCell.self, for: indexPath)
+    cell.imageView.contentMode = imageScaleMode
+    cell.cellDelegate = self
+    cell.photoLoader = photoLoader
+    cell.imageMaximumZoomScale = imageMaximumZoomScale
+    cell.imageZoomScaleForDoubleTap = imageZoomScaleForDoubleTap
+    
+    cellPlugins.forEach {
+      $0.photoBrowserCellDidReused(cell, at: indexPath.item)
     }
+    
+    if let local = localImage(for: indexPath.item) {
+      if let image = local as? UIImage {
+        /// 直接设置
+        cell.setImage(image, highQualityUrl: nil, rawUrl: nil)
+        return cell
+      } else if let image = local as? PHAsset {
+        /// 图片获取
+        if image.mediaType == .image {
+          Async.background{
+            PHCachingImageManager.default().requestImageData(for: image, options: nil) { (data, _, _, _) in
+              if let imageTmp = data, let imageTmp2 = UIImage(data: imageTmp) {
+                Async.main {
+                  cell.setImage(imageTmp2, highQualityUrl: nil, rawUrl: nil)
+                }
+              }
+            }
+          }
+          return cell
+        } else if image.mediaType == .video {
+          /// 视频d封面获取
+          Async.background{
+            PHCachingImageManager.default().requestImage(for: image, targetSize: CGSize(width: image.pixelWidth, height: image.pixelHeight), contentMode: PHImageContentMode.aspectFill, options: nil, resultHandler: { (imageTmp, _) in
+              if let imageTmp2 = imageTmp {
+                Async.main {
+                  cell.setImage(imageTmp2, highQualityUrl: nil, rawUrl: nil)
+                }
+              }
+            })
+          }
+          return cell
+        }
+      }
+    }
+    
+    let (image, highQualityUrl, rawUrl) = imageFor(index: indexPath.item)
+    cell.setImage(image, highQualityUrl: highQualityUrl, rawUrl: rawUrl)
+    
+    return cell
+  }
 
     public func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
       cellPlugins.forEach {
@@ -409,7 +444,7 @@ extension PhotoBrowser: UICollectionViewDataSource {
     }
   
     /// 尝试取本地图片
-    private func localImage(for index: Int) -> UIImage? {
+    private func localImage(for index: Int) -> Any? {
         guard let images = localImages, index < images.count else {
             return localImageFromDelegate(for: index)
         }
@@ -417,7 +452,7 @@ extension PhotoBrowser: UICollectionViewDataSource {
     }
     
     /// 通过代理取本地图片
-    private func localImageFromDelegate(for index: Int) -> UIImage? {
+    private func localImageFromDelegate(for index: Int) -> Any? {
         return photoBrowserDelegate?.photoBrowser(self, localImageForIndex: index)
     }
 

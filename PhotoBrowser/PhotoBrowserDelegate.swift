@@ -30,7 +30,7 @@ public protocol PhotoBrowserDelegate: class {
     /// 实现本方法以返回本地大图。
     /// 本地图片的展示将优先于网络图片。
     /// 如果给 PhotoBrowser 设置了本地图片组 localImages，则本方法不生效。
-    func photoBrowser(_ photoBrowser: PhotoBrowser, localImageForIndex index: Int) -> UIImage?
+    func photoBrowser(_ photoBrowser: PhotoBrowser, localImageForIndex index: Int) -> Any?
 
     /// 长按时回调。可选
     func photoBrowser(_ photoBrowser: PhotoBrowser, didLongPressForIndex index: Int, image: UIImage)
@@ -55,7 +55,7 @@ public extension PhotoBrowserDelegate {
 
     func photoBrowser(_ photoBrowser: PhotoBrowser, rawUrlForIndex index: Int) -> URL? { return nil }
 
-    func photoBrowser(_ photoBrowser: PhotoBrowser, localImageForIndex index: Int) -> UIImage? { return nil }
+    func photoBrowser(_ photoBrowser: PhotoBrowser, localImageForIndex index: Int) -> Any? { return nil }
 
     func photoBrowser(_ photoBrowser: PhotoBrowser, didLongPressForIndex index: Int, image: UIImage) {}
 
